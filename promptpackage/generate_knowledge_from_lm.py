@@ -43,15 +43,15 @@ class CausalGenerator:
         # dict of a single sample
         test_input = tokenizer(test_context, padding = False, truncation = False, return_attention_mask = True, return_token_type_ids = True, return_tensors = 'pt')
 
-        # wrap the single sample with a batch dimension and move it to the same device as the model parameters
+        # wrap the single sample (dict) with a batch dimension (also a dict) and move it to the same device as the model parameters
         for key, value in test_input.items():
             test_input[key] = value.unsqueeze(dim = 0).to(self.device)
         
         return test_input
 
-    def generate_additional_tokens(self, test_input, num_additional_tokens, top_p, num_beams):
+    def generate_additional_tokens(self, test_input, num_additional_tokens, top_p, num_beams, num_return_sequences):
         input_ids = test_input['input_ids']
-        raw_length = input_ids.size(1)
+        raw_length = input_ids.size(1) # B x max_seq_length (a.k.a. actual length of this single sample in this batch) x embdim
         max_length = raw_length + num_additional_tokens
 
         sample_outputs = self.model.generate(
@@ -62,7 +62,7 @@ class CausalGenerator:
             do_sample = True,
             top_p = top_p,
             num_beams = num_beams,
-            num_return_sequences = 1,
+            num_return_sequences = num_return_sequences,
 
             # output_scores = output_scores,
             # output_hidden_states = output_hidden_states,
