@@ -90,7 +90,7 @@ class FairytaleQADatasetMixin(Dataset):
                     
                     input_contexts.append(input_context)
                     self.qids.append(qid)
-        print(len(self.questions))
+        # print(len(self.questions))
         '''
         convert the whole of dataset into torch.*Tensor (tensor {tensor from constant to scalar}), cache them in the CPU RAM, and feed a mini-batch of samples into GPU memory when necessary
         '''

@@ -1,0 +1,214 @@
+{
+    "remember": [
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What is the definition of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The definition of <INPUT> is",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What are the properties of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The properties of <INPUT> are",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "How would you describe <INPUT>?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "<INPUT> is a",
+            "answer-prefix-filling": "generation"
+        }
+    ],
+    "understand": [
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What is the purpose of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The purpose of <INPUT> is to",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What is the main function of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The main function of <INPUT> is",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "How would you classify the type of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The type of <INPUT> is",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What is the difference between",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The difference between <INPUT> is",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "How would you rephrase the meaning of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The meaning of <INPUT> is",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "How would you summarize",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The summarization of <INPUT> is",
+            "answer-prefix-filling": "generation"
+        }
+
+    ],
+    "apply": [
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "What does <INPUT> need to do beforehand?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "Before doing that, <INPUT> first had to",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What approach could be used to",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "<INPUT> is done through",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What facts could be select to demonstrate",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "<INPUT> is demonstrated by",
+            "answer-prefix-filling": "generation"
+        }
+
+    ],
+    "analyze": [
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "How would <INPUT> feel afterwards?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "<INPUT> felt",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What happened as a result of",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "As a result of <INPUT>,",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What might have caused",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "The cause of <INPUT> was",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "Why did <INPUT> do this?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "<INPUT> did this because they wanted",
+            "answer-prefix-filling": "generation"
+        }
+    ],
+    "create": [
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "What will <INPUT> want to do next?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "<INPUT> want",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": "entity-tagging",
+            "question-prefix": "What will happen to <INPUT> next?",
+            "question-prefix-filling": "null",
+
+            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix": "<INPUT> will",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What would happen if",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "If <INPUT>",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "What will be the outcome if",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "If <INPUT>, the output will be",
+            "answer-prefix-filling": "generation"
+        }
+    ],
+    "evaluate": [
+        {
+            "question-prefix-input": null,
+            "question-prefix": "Why do you recommend",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "You recommend <INPUT> because",
+            "answer-prefix-filling": "generation"
+        },
+        {
+            "question-prefix-input": null,
+            "question-prefix": "Why is it better that",
+            "question-prefix-filling": "generation",
+
+            "answer-prefix-input": "additional-tokens-filling-question-prefix",
+            "answer-prefix": "It is better that <INPUT> becase",
+            "answer-prefix-filling": "generation"
+        }
+    ]
+}
