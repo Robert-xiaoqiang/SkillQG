@@ -1,3 +1,4 @@
+import torch
 from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
 
 class CausalGenerator:
@@ -19,16 +20,16 @@ class CausalGenerator:
 
         self.CONFIG_FILLING_QUESTION_PREFIX = {
             'NUM_ADDITIONAL_TOKENS': 6,
-            'TOP_P': 0,
-            'NUM_BEAMS': 0,
-            'NUM_RETURN_SEQUENCES': 0,
+            'TOP_P': 0.2, # sampling from the top 20% tokens
+            'NUM_BEAMS': 32,
+            'NUM_RETURN_SEQUENCES': 5,
         }
 
         self.CONFIG_FILLING_ANSWER_PREFIX = {
             'NUM_ADDITIONAL_TOKENS': 10,
-            'TOP_P': 0,
-            'NUM_BEAMS': 0,
-            'NUM_RETURN_SEQUENCES': 0,
+            'TOP_P': 0.5,
+            'NUM_BEAMS': 32,
+            'NUM_RETURN_SEQUENCES': 10,
         }
 
         self.model.eval()
@@ -36,8 +37,8 @@ class CausalGenerator:
 
     def build_input(self, context, others):
         blank_or_space_token = ' '
-        test_context = tokenizer.bos_token +
-                       blank_or_space_token + context +
+        test_context = tokenizer.bos_token +\
+                       blank_or_space_token + context +\
                        blank_or_space_token + others
         
         # dict of a single sample
@@ -98,7 +99,16 @@ class CausalGenerator:
     '''
     def fill_question_prefix_individual(self, context, question_prefix):
         test_input = self.build_input(context, question_prefix)
-        addition_tokens = self.generate_additional_tokens(test_input)
+        additional_tokens = self.generate_additional_tokens(test_input,
+                                                            num_additional_tokens = self.CONFIG_FILLING_QUESTION_PREFIX['NUM_ADDITIONAL_TOKENS'],
+                                                            top_p = self.CONFIG_FILLING_QUESTION_PREFIX['TOP_P'],
+                                                            num_beams = self.CONFIG_FILLING_QUESTION_PREFIX['NUM_BEAMS'],
+                                                            num_return_sequences = self.CONFIG_FILLING_QUESTION_PREFIX['NUM_RETURN_SEQUENCES'])
+        full_question = question_prefix + ' ' + additional_tokens
+        full_question = full_question + '?' if not full_question.ends_with('?') else full_question
+
+        return full_question, addition_tokens
+        
 
     def fill_answer_prefix_individual(self, context, answer_prefix):
         pass
@@ -108,3 +118,12 @@ class CausalGenerator:
 
     def fill_answer_prefix_batch(self, context, answer_prefix):
         pass
+
+
+if __name__ == '__main__':
+    g = CausalGenerator()
+    
+    context = '''Because Brett found an internship while in college but Ian was unable to, who found a job less quickly after graduation?'''
+    question_prefix = 'What is the purpose of'
+
+    print(g.fill_question_prefix_individual(context, question_prefix))
