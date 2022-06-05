@@ -39,6 +39,11 @@ class FairytaleQADatasetMixin(Dataset):
         input_contexts = [ ]
         self.qids = [ ]
 
+        def write_back():
+            filename = os.path.join(root_directory, 'json', '{}.json'.format(self.split_set))
+            target_dict = { }
+            for 
+
         def section2context(section_id, context_list):
             '''
                 section_id: str or list[str], count from 1
@@ -126,6 +131,9 @@ class FairytaleQADatasetMixin(Dataset):
 
     def __len__(self):
         return len(self.qids)
+
+    def write_back(self):
+        filename = ''
 
 
 class FairytaleQACLMDataset(FairytaleQADatasetMixin, CLMMixin):
