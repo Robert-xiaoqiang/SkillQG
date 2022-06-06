@@ -165,9 +165,35 @@ class CausalGenerator:
         pass
 
 
-def parse_and_build(source_filename):
-    pass
+def parse_and_build(source_dirname, splits, target_dirname):
+    with open('./fairytaleqa_bloom_prompt.json') as f:
+        prompt_dict = json.load(f)
 
+    for split in splits:
+        source_filename = os.path.join(source_dirname, '{}.json'.format(split))
+
+
+if __name__ == '__main__':
+    # import sys
+    # import argparse
+    # sys.path.insert(1, '/home/xqwang/projects/qgqa/skill-qg/')
+    # from skillqgpackage.data.FairytaleQADataset import FairytaleQASeq2SeqLMDataset
+    # from configure.default import config, update_config
+    # parser = argparse.ArgumentParser(description='Train segmentation network')
+    
+    # parser.add_argument('--cfg',
+    #                     help='experiment configure file name',
+    #                     type=str)
+    # parser.add_argument('opts',
+    #                     help="Modify config options using the command-line interface",
+    #                     default=None,
+    #                     nargs=argparse.REMAINDER)
+
+    # args = parser.parse_args()
+    # update_config(config, args)
+
+    # d = FairytaleQASeq2SeqLMDataset(config, 'test', 'dummy')
+    # d.parse_and_build()
 
 if __name__ == '__main__':
     source_filename = ''

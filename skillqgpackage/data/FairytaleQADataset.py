@@ -39,10 +39,18 @@ class FairytaleQADatasetMixin(Dataset):
         input_contexts = [ ]
         self.qids = [ ]
 
-        def write_back():
-            filename = os.path.join(root_directory, 'json', '{}.json'.format(self.split_set))
-            target_dict = { }
-            for 
+        # def write_back():
+        #     filename = os.path.join(os.path.dirname(root_directory), 'json', '{}.json'.format(self.split_set))
+        #     target_dict = { }
+        #     for c, q, a, r, qid in zip(self.contexts, self.questions, self.answers, self.reasoning_skills, self.qids):
+        #         target_dict[qid] = {
+        #             'context': c,
+        #             'question': q,
+        #             'answer': a,
+        #             'reasoning_skill': r
+        #         }
+        #     with open(filename, 'w') as f:
+        #         json.dump(target_dict, f, indent = 4)
 
         def section2context(section_id, context_list):
             '''
@@ -89,13 +97,14 @@ class FairytaleQADatasetMixin(Dataset):
                     self.contexts.append(context)
                     self.questions.append(question)
                     self.answers.append(answer)
+                    self.reasoning_skills.append(reasoning_skill)
                     input_context = cxt_token + ' ' + context + ' ' + \
                                     ans_token + ' ' + answer + ' ' + \
                                     rsk_token + ' ' + reasoning_skill
                     
                     input_contexts.append(input_context)
                     self.qids.append(qid)
-        # print(len(self.questions))
+        # write_back()
         '''
         convert the whole of dataset into torch.*Tensor (tensor {tensor from constant to scalar}), cache them in the CPU RAM, and feed a mini-batch of samples into GPU memory when necessary
         '''
@@ -131,9 +140,6 @@ class FairytaleQADatasetMixin(Dataset):
 
     def __len__(self):
         return len(self.qids)
-
-    def write_back(self):
-        filename = ''
 
 
 class FairytaleQACLMDataset(FairytaleQADatasetMixin, CLMMixin):
