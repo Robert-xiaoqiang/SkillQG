@@ -165,41 +165,115 @@ class CausalGenerator:
         pass
 
 
-def parse_and_build(source_dirname, splits, target_dirname):
-    with open('./fairytaleqa_bloom_prompt.json') as f:
-        prompt_dict = json.load(f)
+class KnowledgePrompter:
+    def __init__(self, prompt_filename):
+        # json.load() will read all the content of the file into memeory and we can discard the corresponding file handler
+        with open(prompt_filename) as f:
+            self.prompt_dict = json.load(f)
+        
+        self.prompt_mapping = {
+            'character': 'remember',
+            'setting': 'remember',
+            'feeling': 'understand',
+            'action': 'apply',
+            'causal relationship': 'analyze',
+            'outcome resolution': 'analyze',
+            'prediction': 'create'
+        }
 
-    for split in splits:
-        source_filename = os.path.join(source_dirname, '{}.json'.format(split))
+        self.generator = CausalGenerator()
 
 
-if __name__ == '__main__':
-    # import sys
-    # import argparse
-    # sys.path.insert(1, '/home/xqwang/projects/qgqa/skill-qg/')
-    # from skillqgpackage.data.FairytaleQADataset import FairytaleQASeq2SeqLMDataset
-    # from configure.default import config, update_config
-    # parser = argparse.ArgumentParser(description='Train segmentation network')
+    def build_sample(self, sample_entry):
+        c, a, r = sample_entry['context'], sample_entry['answer'], sample_entry['reasoning_skill']
+        bloom_key = self.prompt_mapping[r]
+        prompt_list = self.prompt_dict[bloom_key]
+
+        ret_dict = dict(sample_entry)
+
+        for prompt_index, prompt_entry in enumerate(prompt_list):
+            prompt_key = 'prompt-#{}'.format(prompt_index)
+            ret_dict[prompt_key] = { }
+
+            if prompt_entry['question-prefix-input'] is None:
+                context = c + ' ' + a
+                question_prefix = prompt_entry['question_prefix']
+
+                assert prompt['question-prefix-filling'] == 'genration', 'Error in the schema of bloom prompt'
+                questions_list = self.geenrator.fill_question_prefix_individual(context, question_prefix)
+
+                incomplete_answer_prefix = prompt['answer_prefix']    
+                assert prompt['answer-prefix-input'] == 'additional-tokens-filling-question-prefix', 'Error in the schema of bloom prompt'
+                assert prompt['answer-prefix-filling'] == 'generation', 'Error in the schema of bloom prompt'
+
+                for question_id, (full_question, additional_tokens) in enumerate(questions_list):
+                    question_key = 'talking-#{}'.format(question_id)
+                    ret_dict[prompt_key][question_key] = {
+                        'question': full_question,
+                        'answers': [ ]
+                    }
+
+                    new_context = context + ' ' + full_question
+                    answer_prefix = incomplete_answer_prefix.replace('<INPUT>', additional_tokens)
+                    answers_list = self.geenrator.fill_answer_prefix_individual(context, answer_prefix)
+
+                    for full_answer, answer_additional_tokens in answers_list:
+                        ret_dict[prompt_key][question_key]['answers'].append(full_answer)
+
+            else:
+                # TO-DO entity tagging
+                pass
+        
+        return ret_dict
+
+    def build_dataset(self, source_dirname, splits, target_dirname):
+        for split in splits:
+            source_filename = os.path.join(source_dirname, '{}.json'.format(split))
+            os.makedirs(target_dirname, exist_ok = True) # -p
+            with open(source_filename) as f:
+                source_json = json.load(f)
+            
+            target_dict = { } 
+            count = 0
+            for qid, sample_entry in source_json.items():
+                count += 1
+                if count == 16:
+                    break
+                target_dict[qid] = self.build_sample(sample_entry)
+
+            target_filename = os.path.join(target_dirname, '{}.json'.format(split))
+            with open(target_filename, 'w') as f:
+                json.dump(target_dict, f, indent = 4)
+
+# if __name__ == '__main__':
+#     import sys
+#     import argparse
+#     sys.path.insert(1, '/home/xqwang/projects/qgqa/skill-qg/')
+#     from skillqgpackage.data.FairytaleQADataset import FairytaleQASeq2SeqLMDataset
+#     from configure.default import config, update_config
+#     parser = argparse.ArgumentParser(description='Train segmentation network')
     
-    # parser.add_argument('--cfg',
-    #                     help='experiment configure file name',
-    #                     type=str)
-    # parser.add_argument('opts',
-    #                     help="Modify config options using the command-line interface",
-    #                     default=None,
-    #                     nargs=argparse.REMAINDER)
+#     parser.add_argument('--cfg',
+#                         help='experiment configure file name',
+#                         type=str)
+#     parser.add_argument('opts',
+#                         help="Modify config options using the command-line interface",
+#                         default=None,
+#                         nargs=argparse.REMAINDER)
 
-    # args = parser.parse_args()
-    # update_config(config, args)
+#     args = parser.parse_args()
+#     update_config(config, args)
 
-    # d = FairytaleQASeq2SeqLMDataset(config, 'test', 'dummy')
-    # d.parse_and_build()
+#     d = FairytaleQASeq2SeqLMDataset(config, 'test', 'dummy')
+#     d.parse_and_build()
+
 
 if __name__ == '__main__':
-    source_filename = ''
-    target_filename = ''
+    source_dirname = '/home/xqwang/projects/qgqa/FairytaleQAData/json'
+    target_dirname = '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json'
+    splits = [ 'train', 'val', 'test' ]
 
-    ret = parse_and_build(source_filename)
+    prompt_filename = '/home/xqwang/projects/qgqa/skill-qg/promptpackage/fairytaleqa_bloom_prompt.json'
 
-    with open(target_filename, 'w') as f:
-        json.dump(ret, f, indent = 4)
+    prompter = KnowledgePrompter(prompt_filename)
+    prompter.build_dataset(source_dirname, splits, target_dirname)
