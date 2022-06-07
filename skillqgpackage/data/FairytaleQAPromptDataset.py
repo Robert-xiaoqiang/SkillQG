@@ -9,23 +9,12 @@ import csv
 from .DataCommon import CLMMixin, Seq2SeqLMMixin
 
 
-class FairytaleQADatasetMixin(Dataset):
+class FairytaleQAPromptDatasetMixin(Dataset):
     '''
         Prerequisite object/instance-related attributes: self.config, self.split_set, self.tokenizer
-        
-        Note:
-        self.config.TRAIN/VAL/TEST.DATASET_FILENAME is the root directory for the three splits
     '''
-    def parse_and_build(self):
-        assert self.config.TRAIN.DATASET_FILENAME == self.config.VAL.DATASET_FILENAME == self.config.TEST.DATASET_FILENAME, 'FairytaleQA directory parsing error'
-        root_directory = self.config.TRAIN.DATASET_FILENAME
-        context_root_directory = os.path.join(root_directory, 'section-stories')
-        question_root_directory = os.path.join(root_directory, 'questions')
-        
+    def parse_and_build(self):   
         assert self.split_set in { 'train', 'val', 'test' }, 'FairytaleQA splits parsing error'
-
-        context_directory = os.path.join(context_root_directory, self.split_set)
-        question_directory = os.path.join(question_root_directory, self.split_set)
 
         cxt_token = self.config.MODEL.SPECIAL_TOKENS.CXT_TOKEN
         ans_token = self.config.MODEL.SPECIAL_TOKENS.ANS_TOKEN
@@ -38,34 +27,6 @@ class FairytaleQADatasetMixin(Dataset):
         self.reasoning_skills = [ ]
         input_contexts = [ ]
         self.qids = [ ]
-
-        # def write_back():
-        #     filename = os.path.join(os.path.dirname(root_directory), 'json', '{}.json'.format(self.split_set))
-        #     target_dict = { }
-        #     for c, q, a, r, qid in zip(self.contexts, self.questions, self.answers, self.reasoning_skills, self.qids):
-        #         target_dict[qid] = {
-        #             'context': c,
-        #             'question': q,
-        #             'answer': a,
-        #             'reasoning_skill': r
-        #         }
-        #     with open(filename, 'w') as f:
-        #         json.dump(target_dict, f, indent = 4)
-
-        def section2context(section_id, context_list):
-            '''
-                section_id: str or list[str], count from 1
-                context_list: list of <section_id(str), its text(str)> pairs, removing its original header, count from 0 (its index + 1 == section_id)
-            '''
-            section_id_list = [ int(section_id) ] if section_id.find(',') == -1 else list(map(lambda s: int(s), section_id.split(',')))
-            section_text_list = [ ]
-            for sid in section_id_list:
-                section_id_str, section_text = context_list[sid - 1] # list of strs
-                section_text_list.append(section_text.strip())
-
-            ret = ' '.join(section_text_list)
-            
-            return ret
 
         for question_file in os.listdir(question_directory):
             question_main_filename = os.path.splitext(question_file)[0]
@@ -106,7 +67,7 @@ class FairytaleQADatasetMixin(Dataset):
                     
                     input_contexts.append(input_context)
                     self.qids.append(qid)
-        # write_back()
+
         '''
         convert the whole of dataset into torch.*Tensor (tensor {tensor from constant to scalar}), cache them in the CPU RAM, and feed a mini-batch of samples into GPU memory when necessary
         '''
@@ -144,7 +105,7 @@ class FairytaleQADatasetMixin(Dataset):
         return len(self.qids)
 
 
-class FairytaleQACLMDataset(FairytaleQADatasetMixin, CLMMixin):
+class FairytaleQAPromptCLMDataset(FairytaleQAPromptDatasetMixin, CLMMixin):
     def __init__(self, config, split_set, tokenizer):
         super().__init__()
         self.config = config
@@ -154,7 +115,7 @@ class FairytaleQACLMDataset(FairytaleQADatasetMixin, CLMMixin):
         self.parse_and_build()
 
 
-class FairytaleQASeq2SeqLMDataset(FairytaleQADatasetMixin, Seq2SeqLMMixin):
+class FairytaleQAPromptSeq2SeqLMDataset(FairytaleQAPromptDatasetMixin, Seq2SeqLMMixin):
     def __init__(self, config, split_set, tokenizer):
         super().__init__()
         self.config = config

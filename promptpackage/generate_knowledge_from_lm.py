@@ -2,6 +2,8 @@ import os
 import json
 import torch
 from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
+import spacy
+
 
 class CausalGenerator:
     def __init__(self, pretrained_model_name_or_path = 'gpt2', device = None):
@@ -15,23 +17,26 @@ class CausalGenerator:
             pretrained_model_name_or_path,
             do_lower_case = True
         )
+        self.tokenizer.add_special_tokens({
+            'pad_token': '<pad>'
+        })
         self.model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_name_or_path,
             config = model_config
         )
-
+        
         self.CONFIG_FILLING_QUESTION_PREFIX = {
             'NUM_ADDITIONAL_TOKENS': 6,
             'TOP_P': 0.2, # sampling from the top 20% tokens
             'NUM_BEAMS': 8,
-            'NUM_RETURN_SEQUENCES': 2
+            'NUM_RETURN_SEQUENCES': 1
         }
 
         self.CONFIG_FILLING_ANSWER_PREFIX = {
             'NUM_ADDITIONAL_TOKENS': 10,
             'TOP_P': 0.5,
             'NUM_BEAMS': 8,
-            'NUM_RETURN_SEQUENCES': 2
+            'NUM_RETURN_SEQUENCES': 1
         }
 
         self.model.eval()
@@ -183,6 +188,7 @@ class KnowledgePrompter:
 
         self.generator = CausalGenerator()
 
+        self.nlp = spacy.load('en_core_web_sm')
 
     def build_sample(self, sample_entry):
         c, a, r = sample_entry['context'], sample_entry['answer'], sample_entry['reasoning_skill']
@@ -196,35 +202,109 @@ class KnowledgePrompter:
             ret_dict[prompt_key] = { }
 
             if prompt_entry['question-prefix-input'] is None:
-                context = c + ' ' + a
-                question_prefix = prompt_entry['question_prefix']
+                assert prompt_entry['question-prefix-filling'] == 'generation' and prompt_entry['answer-prefix-input'] == 'additional-tokens-filling-question-prefix' and prompt_entry['answer-prefix-filling'] == 'generation', 'Error in the schema of bloom prompt'
 
-                assert prompt['question-prefix-filling'] == 'genration', 'Error in the schema of bloom prompt'
-                questions_list = self.geenrator.fill_question_prefix_individual(context, question_prefix)
+                sample_extra_dict = self.build_sample_generation(sample_entry, prompt_entry)
+            elif prompt_entry['question-prefix-input'] == 'entity-tagging':
+                assert prompt_entry['question-prefix-filling'] is None and prompt_entry['answer-prefix-input'] == 'entity-tagging' and prompt_entry['answer-prefix-filling'] == 'generation', 'Error in the schema of bloom prompt'
 
-                incomplete_answer_prefix = prompt['answer_prefix']    
-                assert prompt['answer-prefix-input'] == 'additional-tokens-filling-question-prefix', 'Error in the schema of bloom prompt'
-                assert prompt['answer-prefix-filling'] == 'generation', 'Error in the schema of bloom prompt'
-
-                for question_id, (full_question, additional_tokens) in enumerate(questions_list):
-                    question_key = 'talking-#{}'.format(question_id)
-                    ret_dict[prompt_key][question_key] = {
-                        'question': full_question,
-                        'answers': [ ]
-                    }
-
-                    new_context = context + ' ' + full_question
-                    answer_prefix = incomplete_answer_prefix.replace('<INPUT>', additional_tokens)
-                    answers_list = self.geenrator.fill_answer_prefix_individual(context, answer_prefix)
-
-                    for full_answer, answer_additional_tokens in answers_list:
-                        ret_dict[prompt_key][question_key]['answers'].append(full_answer)
-
+                sample_extra_dict = self.build_sample_entity_tagging(sample_entry, prompt_entry)
             else:
-                # TO-DO entity tagging
-                pass
-        
+                # raise NotImplementedError('Error in the prompt entry of prompt file')
+                sample_extra_dict = { }
+            
+            # map from `prompt_key` (`prompt_id`) to prompted things of current sample (`extra_knowledge_specific_to_this_sample`)
+            ret_dict[prompt_key] = sample_extra_dict
+
         return ret_dict
+
+    def build_sample_generation(self, sample_entry, prompt_entry):
+        '''
+            first build the following dict
+            {
+                talking-#n: {
+                    question: xx,
+                    answers: [
+
+                    ]
+                }
+                ...
+                ...
+            }
+            and then merge the return value (typed dict) with the `ret_dict[prompt_key]`.
+        '''
+        ret = { }
+        c, a, r = sample_entry['context'], sample_entry['answer'], sample_entry['reasoning_skill']
+        context = c + ' ' + a
+
+        question_prefix = prompt_entry['question-prefix']
+        incomplete_answer_prefix = prompt_entry['answer-prefix']
+
+        questions_list = self.generator.fill_question_prefix_individual(context, question_prefix)
+
+        for question_id, (full_question, additional_tokens) in enumerate(questions_list):
+            question_key = 'talking-#{}'.format(question_id)
+            ret[question_key] = {
+                'question': full_question,
+                'answers': [ ]
+            }
+
+            new_context = context + ' ' + full_question
+            answer_prefix = incomplete_answer_prefix.replace('<INPUT>', additional_tokens)
+            answers_list = self.generator.fill_answer_prefix_individual(new_context, answer_prefix)
+
+            for full_answer, _ in answers_list:
+                ret[question_key]['answers'].append(full_answer)
+
+        return ret 
+
+    def build_sample_entity_tagging(self, sample_entry, prompt_entry):
+        '''
+            first build the following dict
+            {
+                talking-#n: {
+                    question: xx,
+                    answers: [
+
+                    ]
+                }
+                ...
+                ...
+            }
+            and then merge the return value (typed dict) with the `ret_dict[prompt_key]`.
+        '''
+        ret = { }
+        c, a, r = sample_entry['context'], sample_entry['answer'], sample_entry['reasoning_skill']
+        context = c + ' ' + a
+
+        question_prefix = prompt_entry['question-prefix']
+        incomplete_answer_prefix = prompt_entry['answer-prefix']
+
+        # substitute the <INPUT> token of the question prefix with the entity tagging (SUBJECT only)
+        substitution_candidates = list(
+            map(lambda t: t.text,
+                filter(lambda t: 'subj' in t.dep_,
+                    self.nlp(a)
+                )
+            )
+        )
+
+        for question_id, substitution_candidate in enumerate(substitution_candidates):
+            question_key = 'talking-#{}'.format(question_id)
+            full_question = question_prefix.replace('<INPUT>', substitution_candidate)
+            ret[question_key] = {
+                'question': full_question,
+                'answers': [ ]
+            }
+
+            new_context = context + ' ' + full_question
+            answer_prefix = incomplete_answer_prefix.replace('<INPUT>', substitution_candidate)
+            answers_list = self.generator.fill_answer_prefix_individual(new_context, answer_prefix)
+
+            for full_answer, _ in answers_list:
+                ret[question_key]['answers'].append(full_answer)
+
+        return ret
 
     def build_dataset(self, source_dirname, splits, target_dirname):
         for split in splits:
@@ -234,11 +314,11 @@ class KnowledgePrompter:
                 source_json = json.load(f)
             
             target_dict = { } 
-            count = 0
+            # count = 0
             for qid, sample_entry in source_json.items():
-                count += 1
-                if count == 16:
-                    break
+                # count += 1
+                # if count == 16:
+                #     break
                 target_dict[qid] = self.build_sample(sample_entry)
 
             target_filename = os.path.join(target_dirname, '{}.json'.format(split))
@@ -263,9 +343,12 @@ class KnowledgePrompter:
 
 #     args = parser.parse_args()
 #     update_config(config, args)
-
-#     d = FairytaleQASeq2SeqLMDataset(config, 'test', 'dummy')
+#     # d = FairytaleQASeq2SeqLMDataset(config, 'train', 'dummy')
+#     # d.parse_and_build()
+#     d = FairytaleQASeq2SeqLMDataset(config, 'val', 'dummy')
 #     d.parse_and_build()
+#     # d = FairytaleQASeq2SeqLMDataset(config, 'test', 'dummy')
+#     # d.parse_and_build()
 
 
 if __name__ == '__main__':

@@ -21,9 +21,9 @@
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "How would you describe <INPUT>?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "<INPUT> is a",
             "answer-prefix-filling": "generation"
         }
@@ -89,9 +89,9 @@
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "What does <INPUT> need to do beforehand?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "Before doing that, <INPUT> first had to",
             "answer-prefix-filling": "generation"
         },
@@ -119,9 +119,9 @@
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "How would <INPUT> feel afterwards?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "<INPUT> felt",
             "answer-prefix-filling": "generation"
         },
@@ -146,9 +146,9 @@
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "Why did <INPUT> do this?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "<INPUT> did this because they wanted",
             "answer-prefix-filling": "generation"
         }
@@ -157,18 +157,18 @@
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "What will <INPUT> want to do next?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "<INPUT> want",
             "answer-prefix-filling": "generation"
         },
         {
             "question-prefix-input": "entity-tagging",
             "question-prefix": "What will happen to <INPUT> next?",
-            "question-prefix-filling": "null",
+            "question-prefix-filling": null,
 
-            "answer-prefix-input": "entiry-tagging",
+            "answer-prefix-input": "entity-tagging",
             "answer-prefix": "<INPUT> will",
             "answer-prefix-filling": "generation"
         },
