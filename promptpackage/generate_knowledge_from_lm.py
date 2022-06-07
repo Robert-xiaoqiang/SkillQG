@@ -43,12 +43,13 @@ class CausalGenerator:
         self.model.to(self.device)
 
     def build_input(self, context, others):
+        context = context[:2048]
         blank_or_space_token = ' '
         test_context = self.tokenizer.bos_token +\
                        blank_or_space_token + context +\
                        blank_or_space_token + others
         
-        # The dict of a single sample will also be wrapped with a batch dimension automatically by the tokenizer.__call__(...)
+        # The dict of a single sample will be wrapped with a batch dimension automatically by the tokenizer.__call__(...)
         test_input = self.tokenizer(test_context, padding = False, truncation = False, return_attention_mask = True, return_token_type_ids = True, return_tensors = 'pt')
         
         # move it to the same device as the model parameters

@@ -19,54 +19,58 @@ class FairytaleQAPromptDatasetMixin(Dataset):
         cxt_token = self.config.MODEL.SPECIAL_TOKENS.CXT_TOKEN
         ans_token = self.config.MODEL.SPECIAL_TOKENS.ANS_TOKEN
         rsk_token = self.config.MODEL.SPECIAL_TOKENS.RSK_TOKEN
+        ptk_token = self.config.MODEL.SPECIAL_TOKENS.PTK_TOKEN
 
-        # # convert
+        # convert
         self.contexts = [ ]
         self.questions = [ ]
         self.answers = [ ]
         self.reasoning_skills = [ ]
+        self.additional_inputs = [ ]
         input_contexts = [ ]
         self.qids = [ ]
 
-        for question_file in os.listdir(question_directory):
-            question_main_filename = os.path.splitext(question_file)[0]
-            document_id_index = question_main_filename.find('-questions')
-            assert document_id_index != -1, 'FairytaleQA filenames parsing error'
-            document_id = question_main_filename[:document_id_index]
+        if self.split_set == 'train':
+            with open(self.config.TRAIN.DATASET_FILENAME) as f_train:
+                train_set = json.load(f_train)
+                self.data_file = train_set
+        elif self.split_set == 'val':
+            with open(self.config.VAL.DATASET_FILENAME) as f_val:
+                val_set = json.load(f_val)
+                self.data_file = val_set
+        elif self.split_set == 'test':
+            with open(self.config.TEST.DATASET_FILENAME) as f_test:
+                test_set = json.load(f_test)
+                self.data_file = test_set
+        else:
+            self.data_file = None
 
-            context_file = document_id + '-story.csv'
+        talking_pairs = [ ]
 
-            question_filename = os.path.join(question_directory, question_file)
-            context_filename = os.path.join(context_directory, context_file)
- 
-            with open(question_filename) as qf, open(context_filename) as cf:
-                qcsv, ccsv = csv.reader(qf), csv.reader(cf)
-                qheader, cheader = next(qcsv), next(ccsv)
-                
-                clist = list(ccsv) # list of <section_id(str), its text(str)> pairs
-                
-                entry_id_index, section_id_in_context_index, reasoning_skill_index, question_index, answer_index = qheader.index('question_id'), qheader.index('cor_section'), qheader.index('attribute1'), qheader.index('question'), qheader.index('answer1')
+        for qid, augmented_sample_entry in self.data_file.items():
+            context, question, answer, reasoning_skill = augmented_sample_entry.pop('context'), augmented_sample_entry.pop('question'), augmented_sample_entry.pop('answer'), augmented_sample_entry.pop('reasoning_skill')
+            for prompt_key, prompt_talking in augmented_sample_entry.items():
 
-                for qentry in qcsv:
-                    '''
-                    entry fields:
-                    [ (0) 'question_id', (1) 'local-or-sum', (2) 'cor_section', (3) 'attribute1', (4) 'attribute2', (5) 'question', (6) 'ex-or-im1', (7) 'answer1', (8) 'answer2', (9) 'answer3', (10) 'ex-or-im2', (11) 'answer4', (12) 'answer5', (13) 'answer6']
-                    '''
-                    entry_id, reasoning_skill, question, answer = qentry[entry_id_index], qentry[reasoning_skill_index], qentry[question_index], qentry[answer_index]
-                    section_id_in_context = qentry[section_id_in_context_index]
-                    context = section2context(section_id_in_context, clist)
-                    qid = document_id + '-' + entry_id
+                for talking_key, talking_entry in prompt_talking.items():
+                    talking_question = talking_entry['question']
+                    talking_answers = talking_entry['answers']
 
-                    self.contexts.append(context)
-                    self.questions.append(question)
-                    self.answers.append(answer)
-                    self.reasoning_skills.append(reasoning_skill)
-                    input_context = cxt_token + ' ' + context + ' ' + \
-                                    ans_token + ' ' + answer + ' ' + \
-                                    rsk_token + ' ' + reasoning_skill
-                    
-                    input_contexts.append(input_context)
-                    self.qids.append(qid)
+                    for talking_answer in talking_answers:
+                        talking_pair = talking_question + ' ' + talking_answer
+                        talking_pairs.append(talking_pair)
+            additional_input = ' '.join(talking_pairs)
+            input_context = ...
+
+            self.contexts.append(context)
+            self.questions.append(question)
+            self.answers.append(answer)
+            self.reasoning_skills.append(reasoning_skill)
+            input_context = cxt_token + ' ' + context + ' ' + \
+                            ans_token + ' ' + answer + ' ' + \
+                            rsk_token + ' ' + reasoning_skill
+            
+            input_contexts.append(input_context)
+            self.qids.append(qid)
 
         '''
         convert the whole of dataset into torch.*Tensor (tensor {tensor from constant to scalar}), cache them in the CPU RAM, and feed a mini-batch of samples into GPU memory when necessary
