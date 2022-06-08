@@ -11,25 +11,27 @@ def get_tokenizer(pretrained_model_name_or_path, config):
         do_lower_case = config.MODEL.DO_LOWER_CASE
     )
 
+    special_tokens = dict(config.MODEL.SPECIAL_TOKENS)
+
     # add the special tokens with the well-known and common attribute names
     if tokenizer.pad_token is None:
         print('set pad_token...')
-        tokenizer.add_special_tokens({ 'pad_token': config.MODEL.SPECIAL_TOKENS.PAD_TOKEN })
+        tokenizer.add_special_tokens({ 'pad_token': special_tokens.pop('PAD_TOKEN') })
     if tokenizer.cls_token is None:
         print('set cls_token...')
-        tokenizer.add_special_tokens({ 'cls_token': config.MODEL.SPECIAL_TOKENS.CLS_TOKEN })
+        tokenizer.add_special_tokens({ 'cls_token': special_tokens.pop('CLS_TOKEN') })
     if tokenizer.sep_token is None:
         print('set sep_token...')
-        tokenizer.add_special_tokens({ 'sep_token': config.MODEL.SPECIAL_TOKENS.SEP_TOKEN })
+        tokenizer.add_special_tokens({ 'sep_token': special_tokens.pop('SEP_TOKEN') })
     if tokenizer.bos_token is None:
         print('set bos_token...')
-        tokenizer.add_special_tokens({ 'bos_token': config.MODEL.SPECIAL_TOKENS.BOS_TOKEN })
+        tokenizer.add_special_tokens({ 'bos_token': special_tokens.pop('BOS_TOKEN') })
     if tokenizer.eos_token is None:
         print('set eos_token...')
-        tokenizer.add_special_tokens({ 'eos_token': config.MODEL.SPECIAL_TOKENS.EOS_TOKEN })
+        tokenizer.add_special_tokens({ 'eos_token': special_tokens.pop('EOS_TOKEN') })
 
-    # add other special task-specific or architecture-specific tokens
-    tokenizer.add_tokens([ config.MODEL.SPECIAL_TOKENS.CXT_TOKEN, config.MODEL.SPECIAL_TOKENS.ANS_TOKEN, config.MODEL.SPECIAL_TOKENS.QUE_TOKEN, config.MODEL.SPECIAL_TOKENS.RSK_TOKEN ])
+    # add other task-specific or architecture-specific special tokens
+    tokenizer.add_tokens(list(special_tokens.values()))
 
     return tokenizer
 

@@ -7,6 +7,7 @@ import json
 
 from .SquadV1Dataset import *
 from .FairytaleQADataset import *
+from .FairytaleQAPromptDataset import *
 
 class DataModule(pl.LightningDataModule):
     def __init__(self, tokenizer, config):

@@ -19,7 +19,7 @@ class FairytaleQAPromptDatasetMixin(Dataset):
         cxt_token = self.config.MODEL.SPECIAL_TOKENS.CXT_TOKEN
         ans_token = self.config.MODEL.SPECIAL_TOKENS.ANS_TOKEN
         rsk_token = self.config.MODEL.SPECIAL_TOKENS.RSK_TOKEN
-        ptk_token = self.config.MODEL.SPECIAL_TOKENS.PTK_TOKEN
+        pik_token = self.config.MODEL.SPECIAL_TOKENS.PIK_TOKEN
 
         # convert
         self.contexts = [ ]
@@ -50,24 +50,23 @@ class FairytaleQAPromptDatasetMixin(Dataset):
         for qid, augmented_sample_entry in self.data_file.items():
             context, question, answer, reasoning_skill = augmented_sample_entry.pop('context'), augmented_sample_entry.pop('question'), augmented_sample_entry.pop('answer'), augmented_sample_entry.pop('reasoning_skill')
             for prompt_key, prompt_talking in augmented_sample_entry.items():
-
                 for talking_key, talking_entry in prompt_talking.items():
                     talking_question = talking_entry['question']
                     talking_answers = talking_entry['answers']
-
                     for talking_answer in talking_answers:
                         talking_pair = talking_question + ' ' + talking_answer
                         talking_pairs.append(talking_pair)
             additional_input = ' '.join(talking_pairs)
-            input_context = ...
 
             self.contexts.append(context)
             self.questions.append(question)
             self.answers.append(answer)
             self.reasoning_skills.append(reasoning_skill)
+            self.additional_inputs.append(additional_input)
             input_context = cxt_token + ' ' + context + ' ' + \
                             ans_token + ' ' + answer + ' ' + \
-                            rsk_token + ' ' + reasoning_skill
+                            rsk_token + ' ' + reasoning_skill + ' ' + \
+                            pik_token + ' ' + additional_input
             
             input_contexts.append(input_context)
             self.qids.append(qid)
