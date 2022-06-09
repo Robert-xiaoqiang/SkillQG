@@ -34,7 +34,7 @@ TRAIN:
   NUM_EPOCHS: 128
   NUM_WARMUP_STEPS: 2048
   BATCH_SIZE: 8
-  PATIENCE: 32
+  PATIENCE: 128
   DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/train.json'
   LR: 6.25e-5
   EXTRA_LR: 1.00e-4
