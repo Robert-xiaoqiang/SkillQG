@@ -45,10 +45,10 @@ class FairytaleQAPromptDatasetMixin(Dataset):
         else:
             self.data_file = None
 
-        talking_pairs = [ ]
-
         for qid, augmented_sample_entry in self.data_file.items():
             context, question, answer, reasoning_skill = augmented_sample_entry.pop('context'), augmented_sample_entry.pop('question'), augmented_sample_entry.pop('answer'), augmented_sample_entry.pop('reasoning_skill')
+
+            talking_pairs = [ ]
             for prompt_key, prompt_talking in augmented_sample_entry.items():
                 for talking_key, talking_entry in prompt_talking.items():
                     talking_question = talking_entry['question']
@@ -115,6 +115,7 @@ class FairytaleQAPromptCLMDataset(FairytaleQAPromptDatasetMixin, CLMMixin):
         self.split_set = split_set
         self.tokenizer = tokenizer
 
+        # this in-memory construction on CPU is infeasible for longer sequence
         self.parse_and_build()
 
 
@@ -125,4 +126,5 @@ class FairytaleQAPromptSeq2SeqLMDataset(FairytaleQAPromptDatasetMixin, Seq2SeqLM
         self.split_set = split_set
         self.tokenizer = tokenizer
 
+        # this in-memory construction on CPU is infeasible for longer sequence
         self.parse_and_build()
