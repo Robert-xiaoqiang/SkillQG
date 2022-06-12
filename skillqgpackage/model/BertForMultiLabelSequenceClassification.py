@@ -63,7 +63,7 @@ class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
             The final loss is computed as the average of losses of samples in the batch, while the loss of a sample is the summation of all its labels.
             '''
             raw_loss = loss_fct(independent_normalized_logits, labels)
-            loss = raw_loss / labels.size(-1)
+            loss = raw_loss / labels.size(0)
 
         if not return_dict:
             output = (logits,) + outputs[2:]

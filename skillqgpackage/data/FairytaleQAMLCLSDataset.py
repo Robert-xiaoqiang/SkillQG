@@ -6,15 +6,15 @@ import os
 import json
 import csv
 
+from .DataCommon import MLMMixin
+
+
 class FairytaleQAMLCLSDataset(Dataset):
     def __init__(self, config, split_set, tokenizer):
         super().__init__()
         self.config = config
         self.split_set = split_set
         self.tokenizer = tokenizer
-
-        # this in-memory construction on CPU is infeasible for longer sequence
-        self.parse_and_build()
 
     def parse_and_build(self):
         assert self.config.TRAIN.DATASET_FILENAME == self.config.VAL.DATASET_FILENAME == self.config.TEST.DATASET_FILENAME, 'FairytaleQA directory parsing error'
@@ -28,12 +28,12 @@ class FairytaleQAMLCLSDataset(Dataset):
         question_directory = os.path.join(question_root_directory, self.split_set)
 
         # # convert
-        self.contexts = [ ]
-        self.questions = [ ]
-        self.answers = [ ]
-        self.reasoning_skills = [ ]
+        self.whole_stories = [ ]
+        self.reasoning_skills_lists = [ ]
+        self.labels_lists = [ ]
+
         input_contexts = [ ]
-        self.qids = [ ]
+        self.sample_ids = [ ]
 
         '''
             0: remember
@@ -43,7 +43,8 @@ class FairytaleQAMLCLSDataset(Dataset):
             4: create
             5: evaluate
         '''
-        self.skill2cls = {
+        # a 5-dimensional vector
+        self.skill2label = {
             'character': 0,
             'setting': 0,
             'feeling': 1,
@@ -52,21 +53,7 @@ class FairytaleQAMLCLSDataset(Dataset):
             'outcome resolution': 3,
             'prediction': 4
         }
-
-        def csv2(section_id, context_list):
-            '''
-                section_id: str or list[str], count from 1
-                context_list: list of <section_id(str), its text(str)> pairs, removing its original header, count from 0 (its index + 1 == section_id)
-            '''
-            section_id_list = [ int(section_id) ] if section_id.find(',') == -1 else list(map(lambda s: int(s), section_id.split(',')))
-            section_text_list = [ ]
-            for sid in section_id_list:
-                section_id_str, section_text = context_list[sid - 1] # list of strs
-                section_text_list.append(section_text.strip())
-
-            ret = ' '.join(section_text_list)
-            
-            return ret
+        num_labels = len(set(self.skill2label.values()))
 
         for question_file in os.listdir(question_directory):
             question_main_filename = os.path.splitext(question_file)[0]
@@ -83,10 +70,13 @@ class FairytaleQAMLCLSDataset(Dataset):
                 qcsv, ccsv = csv.reader(qf), csv.reader(cf)
                 qheader, cheader = next(qcsv), next(ccsv)
                 
-                clist = list(ccsv) # list of <section_id(str), its text(str)> pairs
-                whole_story = ' '.join(map(lambda x: x, ccsv))
+                # ccsv: iterable (object) of <section_id(str), its text(str)> pairs
+                whole_story = ' '.join(map(lambda l: l[1], ccsv))
+     
+                reasoning_skills_set = set()
+                labels_list = [ 0 ] * num_labels
                 
-                entry_id_index, section_id_in_context_index, reasoning_skill_index = qheader.index('question_id'), qheader.index('cor_section'), qheader.index('attribute1')
+                entry_id_index, reasoning_skill_index = qheader.index('question_id'), qheader.index('attribute1')
 
                 for qentry in qcsv:
                     '''
@@ -94,35 +84,32 @@ class FairytaleQAMLCLSDataset(Dataset):
                     [ (0) 'question_id', (1) 'local-or-sum', (2) 'cor_section', (3) 'attribute1', (4) 'attribute2', (5) 'question', (6) 'ex-or-im1', (7) 'answer1', (8) 'answer2', (9) 'answer3', (10) 'ex-or-im2', (11) 'answer4', (12) 'answer5', (13) 'answer6']
                     '''
                     entry_id, reasoning_skill = qentry[entry_id_index], qentry[reasoning_skill_index]
-                    section_id_in_context = qentry[section_id_in_context_index]
-                    context = section2context(section_id_in_context, clist)
-                    qid = document_id + '-' + entry_id
 
-                    self.contexts.append(context)
-                    self.questions.append(question)
-                    self.answers.append(answer)
-                    self.reasoning_skills.append(reasoning_skill)
-                    input_context = cxt_token + ' ' + context + ' ' + \
-                                    ans_token + ' ' + answer + ' ' + \
-                                    rsk_token + ' ' + reasoning_skill
-                    
-                    input_contexts.append(input_context)
-                    self.qids.append(qid)
+                    reasoning_skills_set.add(reasoning_skill)
+
+                    label_index = self.skill2label[reasoning_skill]
+                    labels_list[label_index] = 1
+
+                self.whole_stories.append(whole_story)
+                self.reasoning_skills_lists.append(list(reasoning_skills_set))
+                self.labels_lists.append(labels_list)
+                self.sample_ids.append(document_id)
+
         '''
         convert the whole of dataset into torch.*Tensor (tensor {tensor from constant to scalar}), cache them in the CPU RAM, and feed a mini-batch of samples into GPU memory when necessary
         '''
         if self.split_set in { 'train', 'val' }:
-            train_inputs, test_inputs = self.prepare_input(input_contexts, self.questions)
+            train_inputs, test_inputs = self.prepare_input(self.whole_stories, self.labels_lists)
         else:
-            train_inputs, test_inputs = self.prepare_input(input_contexts)
+            train_inputs, test_inputs = self.prepare_input(self.whole_stories)
 
         self.train_inputs, self.test_inputs = train_inputs, test_inputs
 
     def __getitem__(self, index):
         train_input = { }
         test_input = { }
-        question_text = self.questions[index]
-        qid = self.qids[index]
+        labels_list = self.labels_lists[index]
+        sample_ids = self.sample_ids[index]
 
         if self.split_set in { 'train', 'val' }:
             for key in self.train_inputs.keys():
@@ -131,15 +118,26 @@ class FairytaleQAMLCLSDataset(Dataset):
                 test_input[key] = self.test_inputs[key][index]
 
             if self.split_set == 'train':
-                return train_input, test_input, question_text
+                return train_input, test_input, labels_list
             elif self.split_set == 'val':
-                return train_input, test_input, question_text, qid
+                return train_input, test_input, labels_list, sample_ids
         else:
             for key in self.test_inputs.keys():
                 test_input[key] = self.test_inputs[key][index]
 
             # fake test in our experiments, because they contain the ground truth sequence
-            return test_input, question_text, qid
+            return test_input, labels_list, sample_ids
 
     def __len__(self):
-        return len(self.qids)
+        return len(self.sample_ids)
+
+
+class FairytaleQAMLCLSMLMDataset(FairytaleQAMLCLSDataset, MLMMixin):
+    def __init__(self, config, split_set, tokenizer):
+        super().__init__()
+        self.config = config
+        self.split_set = split_set
+        self.tokenizer = tokenizer
+
+        # this in-memory construction on CPU is infeasible for longer sequence
+        self.parse_and_build()

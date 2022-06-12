@@ -8,14 +8,38 @@ import json
 class LMMixin:
     def convert_to_tensor(self, model_input):
         # Now all tensors are contructed in the CPU and will be manually moved to other devides later.
-        # key -> nested python list of python integers or LongTensor
+        # key -> nested python list of python objects or torch.LongTensor
         for key, value in model_input.items():
             if not torch.is_tensor(value):
                 model_input[key] = torch.LongTensor(value)
         return model_input
 
 
-# {GPT2 or GPT3}-style input (decoder-only, autoregressive-only generation)
+# BERT or BERT-like input (masked language modeling for understanding)
+class MLMMixin(LMMixin):
+    def prepare_input(self, context, label=None):
+        tokenizer = self.tokenizer
+
+        '''
+        Tokenizers of BERT or BERT-like (MLM) models will wrap the input sequence with cls/sep automatically. i.e.,
+        tokenizer(s) -> [CLS] s [SEP]
+        tokenizer(s1, s2) -> [CLS] s1 [SEP] s2 [SEP]
+        '''
+
+        test_context = context
+        test_input = tokenizer(test_context, padding = 'max_length', truncation = True, max_length = self.config.MODEL.MAX_INPUT_LENGTH, return_attention_mask = True, return_token_type_ids = True, return_tensors = 'pt')
+
+        train_input = None
+        if label is not None:
+            train_input = copy.deepcopy(test_input)
+            train_input['labels'] = label # B x num_labels (int)
+
+            train_input = self.convert_to_tensor(train_input)
+
+        return train_input, test_input
+
+
+# {GPT2 or GPT3}-style input (decoder-only causal language modeling for generation)
 class CLMMixin(LMMixin):
     def prepare_input(self, context, label=None):
         tokenizer = self.tokenizer
@@ -23,7 +47,7 @@ class CLMMixin(LMMixin):
         
         # we mark the label using an extra special token <que> besides the <cxt> and <ans> used in the context because the context and label will be wrapped as a single sequence in the construction of CLM input
         que_token = self.config.MODEL.SPECIAL_TOKENS.QUE_TOKEN
-        question_prefix = que_token + ' Ask a question:'
+        question_prefix = que_token + ' Ask a question:' # Prompt-orinted Full-model Fine-tuning (POFMFT)
         blank_or_space_token = ' '
         
         '''
@@ -74,7 +98,7 @@ class CLMMixin(LMMixin):
         return train_input, test_input
 
 
-# {BART, T5 or MASS}-style input (classical encoder-decoder generation)
+# {BART, T5 or MASS}-style input (classical sequence-to-sequence or encoder-decoder language modeling for generation)
 class Seq2SeqLMMixin(LMMixin):
     def prepare_input(self, context, label=None):
         tokenizer = self.tokenizer
@@ -95,7 +119,7 @@ class Seq2SeqLMMixin(LMMixin):
         Therefore, although there are essential difference in their formats, I think we can employ an unified format to deal with the input for all generation-oriented tasks (i.e. CLM and Seq2Seq model).
         '''
         # Tokenizers of the Seq2Seq models will wrap the input sequence with bos/eos or bos/eos-styled special tokens besides the essential padding tokens
-        test_input = tokenizer(context, padding = 'max_length', truncation = True, max_length = self.config.MODEL.DOC_STRIDE, return_attention_mask = True, return_tensors = 'pt')
+        test_input = tokenizer(context, padding = 'max_length', truncation = True, max_length = self.config.MODEL.DOC_STRIDE, return_attention_mask = True, return_token_type_ids = True, return_tensors = 'pt')
 
         train_input = None
         if label is not None:
@@ -109,7 +133,7 @@ class Seq2SeqLMMixin(LMMixin):
             # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             # Thus, both input_ids and labels of BART are enclosed with bos/eos
             # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            train_input['labels'] = tokenizer(label, padding = 'max_length', truncation = True, max_length = self.config.MODEL.MAX_QUERY_LENGTH, return_attention_mask = True)['input_ids']
+            train_input['labels'] = tokenizer(label, padding = 'max_length', truncation = True, max_length = self.config.MODEL.MAX_QUERY_LENGTH, return_attention_mask = True, return_token_type_ids = True)['input_ids']
             
             # then build decoder_input_ids
             # decoder_input_ids will be built by shifting labels right for BartForConditionalGeneration and adding decoder_start_token_id (eos_token_id).
