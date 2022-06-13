@@ -1,4 +1,5 @@
 import torch
+from torch.nn import functional as F
 from torch.utils.data import Dataset
 import pytorch_lightning as pl
 
@@ -9,13 +10,10 @@ import csv
 from .DataCommon import MLMMixin
 
 
-class FairytaleQAMLCLSDataset(Dataset):
-    def __init__(self, config, split_set, tokenizer):
-        super().__init__()
-        self.config = config
-        self.split_set = split_set
-        self.tokenizer = tokenizer
-
+class FairytaleQAMLCLSDatasetMixin(Dataset):
+    '''
+    A mix-in class without its own constructor is just a best-practice.
+    '''
     def parse_and_build(self):
         assert self.config.TRAIN.DATASET_FILENAME == self.config.VAL.DATASET_FILENAME == self.config.TEST.DATASET_FILENAME, 'FairytaleQA directory parsing error'
         root_directory = self.config.TRAIN.DATASET_FILENAME
@@ -55,7 +53,7 @@ class FairytaleQAMLCLSDataset(Dataset):
         }
         num_labels = len(set(self.skill2label.values()))
 
-        for question_file in os.listdir(question_directory):
+        for question_file in list(os.listdir(question_directory))[:8]:
             question_main_filename = os.path.splitext(question_file)[0]
             document_id_index = question_main_filename.find('-questions')
             assert document_id_index != -1, 'FairytaleQA filenames parsing error'
@@ -109,7 +107,7 @@ class FairytaleQAMLCLSDataset(Dataset):
         train_input = { }
         test_input = { }
         labels_list = self.labels_lists[index]
-        sample_ids = self.sample_ids[index]
+        sample_id = self.sample_ids[index]
 
         if self.split_set in { 'train', 'val' }:
             for key in self.train_inputs.keys():
@@ -120,19 +118,19 @@ class FairytaleQAMLCLSDataset(Dataset):
             if self.split_set == 'train':
                 return train_input, test_input, labels_list
             elif self.split_set == 'val':
-                return train_input, test_input, labels_list, sample_ids
+                return train_input, test_input, labels_list, sample_id
         else:
             for key in self.test_inputs.keys():
                 test_input[key] = self.test_inputs[key][index]
 
             # fake test in our experiments, because they contain the ground truth sequence
-            return test_input, labels_list, sample_ids
+            return test_input, labels_list, sample_id
 
     def __len__(self):
         return len(self.sample_ids)
 
 
-class FairytaleQAMLCLSMLMDataset(FairytaleQAMLCLSDataset, MLMMixin):
+class FairytaleQAMLCLSMLMDataset(FairytaleQAMLCLSDatasetMixin, MLMMixin):
     def __init__(self, config, split_set, tokenizer):
         super().__init__()
         self.config = config

@@ -5,22 +5,25 @@ import os
 import json
 import glob
 
-from evalpackage import Evaluator, Bleu, Rouge, Meteor
+from evalpackage import Evaluator, Bleu, Rouge, Meteor, MLCLSEvaluator
 
 
 class TrainerModuleEvalMixin:
     bleu_scorer = Bleu(4)
     rouge_scorer = Rouge()
 
-    def write_rank_prediction(self, hyp_questions, gold_standards, qids, subdir):
+    def write_rank_prediction(self, hyps, refs, posteriors, sample_ids, subdir):
         prediction_dict = { }
         sum_dict = { }
-        for hyp_question, gold_standard, qid in zip(hyp_questions, gold_standards, qids):
+        # dynamic evaluator class
+        E = eval(self.config.EVALUATE.EVALUATOR)
+        for hyp, ref, pos, qid in zip(hyps, refs, posteriors, sample_ids):
             prediction_dict[qid] = {
-                'hyp': hyp_question,
-                'ref': gold_standard
+                'hyp': hyp,
+                'ref': ref
             }
-            scores_dict = Evaluator.compute_individual_metrics(gold_standard, hyp_question)
+            # dynamic in-class utility (staticmethod)
+            scores_dict = E.compute_individual_metrics(ref, hyp, pos)
             prediction_dict[qid].update(scores_dict)
 
             for k, v in scores_dict.items():
@@ -28,7 +31,7 @@ class TrainerModuleEvalMixin:
         
         average_dict = { }
         for k, v in sum_dict.items():
-            average_dict[k] = v / float(len(hyp_questions))
+            average_dict[k] = v / float(len(hyps))
 
         prediction_dirname = os.path.join(self.prediction_path, subdir)
         os.makedirs(prediction_dirname, exist_ok = True)

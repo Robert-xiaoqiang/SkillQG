@@ -3,6 +3,7 @@ import os
 from pprint import pprint
 from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 
+from .BertForMultiLabelSequenceClassification import BertForMultiLabelSequenceClassification
 from ..helper.TrainHelper import AverageMeter, LoggerPather
 
 def get_tokenizer(pretrained_model_name_or_path, config):

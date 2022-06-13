@@ -1,12 +1,15 @@
 __all__ = [
     'CLMTrainerModule',
     'Seq2SeqLMTrainerModule',
-    'RLCLMTrainerModule'
+    'RLCLMTrainerModule',
+    'CLSTrainerModule'
 ]
 
 from .CLMTrainerModule import CLMTrainerModule
 from .Seq2SeqLMTrainerModule import Seq2SeqLMTrainerModule
 from .RLCLMTrainerModule import RLCLMTrainerModule
+
+from .CLSTrainerModule import CLSTrainerModule
 
 '''
 These pre-importing classes will overwrite/hide their corresponding parent-level modules (with the same names).

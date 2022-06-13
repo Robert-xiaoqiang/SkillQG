@@ -92,6 +92,9 @@ _C.TEST.WORKERS = 32
 # generating
 _C.GENERATE = CN(new_allowed=True)
 
+# evaluating
+_C.EVALUATE = CN(new_allowed=True)
+
 # debug
 _C.DEBUG = CN()
 _C.DEBUG.DEBUG = False

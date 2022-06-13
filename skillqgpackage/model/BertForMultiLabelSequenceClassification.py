@@ -5,6 +5,25 @@ from torch.nn import init
 from transformers import BertPreTrainedModel, BertModel
 from transformers.modeling_outputs import SequenceClassifierOutput
 
+
+# # PyTorch's `_load_from_state_dict` does not copy parameters in a module's descendants
+# # so we need to apply the function recursively.
+# def load(module: nn.Module, prefix=""):
+#     local_metadata = {} if metadata is None else metadata.get(prefix[:-1], {})
+#     module._load_from_state_dict(
+#         state_dict,
+#         prefix,
+#         local_metadata,
+#         True,
+#         missing_keys,
+#         unexpected_keys,
+#         error_msgs,
+#     )
+#     for name, child in module._modules.items():
+#         if child is not None:
+#             load(child, prefix + name + ".")
+
+
 '''
     Huggingface Transformers v4.4.2 only
 '''

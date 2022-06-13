@@ -62,3 +62,5 @@ GENERATE:
   TOP_P: 0.9
   TOP_K: 4
   BEAM_SIZE: 8
+EVALUATE:
+  EVALUATE: Evaluator

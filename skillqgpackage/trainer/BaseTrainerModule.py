@@ -50,6 +50,30 @@ class BaseTrainerModule(pl.LightningModule, TrainerModuleEvalMixin):#, metaclass
 
         self.loss_avg_meter = AverageMeter()
 
+    def configure_optimizers(self):
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
+                "weight_decay": self.config.TRAIN.WD,
+            },
+            {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
+        ]
+        optimizer = AdamW(optimizer_grouped_parameters, lr = self.config.TRAIN.LR, correct_bias = True)
+
+        lr_scheduler = get_linear_schedule_with_warmup(
+            optimizer, num_warmup_steps = self.config.TRAIN.NUM_WARMUP_STEPS, num_training_steps = self.num_iterations
+        )
+
+        # Before pl v1.3, lr_scheduler is invoked automatically according to the interval (step or epoch)
+        # After pl v1.3, it is a manual operation (manually)
+        lr_dict = {
+            'scheduler': lr_scheduler,
+            'interval': 'step'
+        }
+
+        return [ optimizer ], [ lr_dict ]
+
     def forward(self, **args):
         return self.model(**args)
     
@@ -147,23 +171,26 @@ class BaseTrainerModule(pl.LightningModule, TrainerModuleEvalMixin):#, metaclass
         with torch.no_grad():
             sample_outputs = self.generate(input_ids, num_return_sequences, do_sample = False, output_scores = False)
 
+        hyp_scores = 'dummy'
         # B*num_return_sequences x max_seq_len
         hyp_questions = self.decode(input_ids, sample_outputs)
 
-        return hyp_questions, gold_standards, qids
+        return hyp_questions, hyp_scores, gold_standards, qids
 
     def test_epoch_end(self, test_step_outputs):
         hyp_questions = [ ]
+        hyp_scores = [ ]
         gold_standards = [ ]
         qids = [ ]
 
-        for batch_hyp_questions, batch_gold_standards, batch_qids in test_step_outputs:
+        for batch_hyp_questions, batch_hyp_scores, batch_gold_standards, batch_qids in test_step_outputs:
             hyp_questions.extend(list(batch_hyp_questions))
+            hyp_scores.extend(list(batch_hyp_scores))
             gold_standards.extend(list(batch_gold_standards))
             qids.extend(list(batch_qids))
 
         subdir = 'best'
-        average_dict = self.write_rank_prediction(hyp_questions, gold_standards, qids, subdir)
+        average_dict = self.write_rank_prediction(hyp_questions, gold_standards, hyp_scores, qids, subdir)
 
         self.save_huggingface_model('huggingface_best')
 
@@ -173,27 +200,3 @@ class BaseTrainerModule(pl.LightningModule, TrainerModuleEvalMixin):#, metaclass
             self.gather_rank_prediction(subdir)
 
         return average_dict
-    
-    def configure_optimizers(self):
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": self.config.TRAIN.WD,
-            },
-            {"params": [p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
-        ]
-        optimizer = AdamW(optimizer_grouped_parameters, lr = self.config.TRAIN.LR, correct_bias = True)
-
-        lr_scheduler = get_linear_schedule_with_warmup(
-            optimizer, num_warmup_steps = self.config.TRAIN.NUM_WARMUP_STEPS, num_training_steps = self.num_iterations
-        )
-
-        # Before pl v1.3, lr_scheduler is invoked automatically according to the interval (step or epoch)
-        # After pl v1.3, it is a manual operation (manually)
-        lr_dict = {
-            'scheduler': lr_scheduler,
-            'interval': 'step'
-        }
-
-        return [ optimizer ], [ lr_dict ]
