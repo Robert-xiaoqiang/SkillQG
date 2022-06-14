@@ -54,7 +54,7 @@ class FairytaleQAMLCLSDatasetMixin(Dataset):
         num_labels = len(set(self.skill2label.values()))
         empty_labels_list = [ 0 ] * num_labels
 
-        for question_file in list(os.listdir(question_directory))[:64]:
+        for question_file in os.listdir(question_directory):
             question_main_filename = os.path.splitext(question_file)[0]
             document_id_index = question_main_filename.find('-questions')
             assert document_id_index != -1, 'FairytaleQA filenames parsing error'

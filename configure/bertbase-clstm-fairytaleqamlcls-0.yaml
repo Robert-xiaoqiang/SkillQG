@@ -30,10 +30,10 @@ MODEL:
 TRAIN:
   TRAINER_MODULE: CLSTrainerModule
   DATASET: FairytaleQAMLCLSMLMDataset
-  NUM_EPOCHS: 0x3
+  NUM_EPOCHS: 128
   NUM_WARMUP_STEPS: 2048
   BATCH_SIZE: 8
-  PATIENCE: 03
+  PATIENCE: 128
   DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/data-by-train-split'
   LR: 6.25e-5
   EXTRA_LR: 1.00e-4
