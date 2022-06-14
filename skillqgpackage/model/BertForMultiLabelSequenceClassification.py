@@ -23,18 +23,18 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 #         if child is not None:
 #             load(child, prefix + name + ".")
 
-
 '''
     Huggingface Transformers v4.4.2 only
 '''
 class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
-        self.num_labels = config.num_labels
+        # self.num_labels = config.num_labels
+        self.num_labels = 5
 
         self.bert = BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+        self.classifier = nn.Linear(config.hidden_size, self.num_labels)
 
         self.init_weights()
 
@@ -71,7 +71,7 @@ class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
 
         loss = None
         if labels is not None:
-            assert logits.shape == labels.shape, 'Error in the labels of multilabel classification'
+            assert logits.shape == labels.shape, 'Error in the labels of multilabel classification: {} != {}'.format(logits.shape, labels.shape)
             # Multi-label classification == num_labels times binary classification
             independent_normalized_logits = F.sigmoid(logits)
             # B(optional=1) x num_labels x (optional shape HxW, DxHxW, or L)
@@ -81,8 +81,10 @@ class BertForMultiLabelSequenceClassification(BertPreTrainedModel):
             Hereon, we binarily classify a label of a sample and its shape (BxC) seems vague and confusing because this shape is more common in a multi-class classification setting. However, according to the official implementation, `nn.BCELoss` will work very well and exactly calculate what we want.
             The final loss is computed as the average of losses of samples in the batch, while the loss of a sample is the summation of all its labels.
             '''
-            raw_loss = loss_fct(independent_normalized_logits, labels)
+            raw_loss = loss_fct(independent_normalized_logits, labels.float())
             loss = raw_loss / labels.size(0)
+
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
         if not return_dict:
             output = (logits,) + outputs[2:]

@@ -4,14 +4,21 @@ import pytorch_lightning as pl
 import os
 import copy
 import json
+from collections import *
 
 class LMMixin:
     def convert_to_tensor(self, model_input):
         # Now all tensors are contructed in the CPU and will be manually moved to other devides later.
         # key -> nested python list of python objects or torch.LongTensor
-        for key, value in model_input.items():
-            if not torch.is_tensor(value):
-                model_input[key] = torch.LongTensor(value)
+        if issubclass(type(model_input), (dict, OrderedDict, UserDict)):
+            for key, value in model_input.items():
+                if not torch.is_tensor(value):
+                    model_input[key] = torch.LongTensor(value)
+        elif issubclass(type(model_input), list):
+            model_input = torch.LongTensor(model_input)
+        else:
+            raise NotImplementedError
+
         return model_input
 
 
@@ -32,7 +39,7 @@ class MLMMixin(LMMixin):
         train_input = None
         if label is not None:
             train_input = copy.deepcopy(test_input)
-            train_input['labels'] = label # B x num_labels (int)
+            train_input['labels'] = label # B x num_labels (python built-in int)
 
             train_input = self.convert_to_tensor(train_input)
 

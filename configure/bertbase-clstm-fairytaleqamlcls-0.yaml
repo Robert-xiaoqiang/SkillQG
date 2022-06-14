@@ -1,4 +1,4 @@
-NAME: 'bertbase-clstm-fairytaleqamlclsmlm-0'
+NAME: 'bertbase-clstm-fairytaleqamlcls-0'
 DEVICE: 'cuda:0,1,2,3'
 ACCELERATOR: 'ddp'
 SEED: 32767
@@ -57,4 +57,4 @@ TEST:
   BATCH_SIZE: 8
   WORKERS: 32
 EVALUATE:
-  EVALUATE: MLCLSEvaluator
+  EVALUATOR: MLCLSEvaluator

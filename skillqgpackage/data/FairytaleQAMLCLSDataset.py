@@ -52,8 +52,9 @@ class FairytaleQAMLCLSDatasetMixin(Dataset):
             'prediction': 4
         }
         num_labels = len(set(self.skill2label.values()))
+        empty_labels_list = [ 0 ] * num_labels
 
-        for question_file in list(os.listdir(question_directory))[:8]:
+        for question_file in list(os.listdir(question_directory))[:64]:
             question_main_filename = os.path.splitext(question_file)[0]
             document_id_index = question_main_filename.find('-questions')
             assert document_id_index != -1, 'FairytaleQA filenames parsing error'
@@ -72,7 +73,7 @@ class FairytaleQAMLCLSDatasetMixin(Dataset):
                 whole_story = ' '.join(map(lambda l: l[1], ccsv))
      
                 reasoning_skills_set = set()
-                labels_list = [ 0 ] * num_labels
+                labels_list = empty_labels_list.copy()
                 
                 entry_id_index, reasoning_skill_index = qheader.index('question_id'), qheader.index('attribute1')
 
@@ -102,11 +103,18 @@ class FairytaleQAMLCLSDatasetMixin(Dataset):
             train_inputs, test_inputs = self.prepare_input(self.whole_stories)
 
         self.train_inputs, self.test_inputs = train_inputs, test_inputs
+        self.labels_lists = self.convert_to_tensor(self.labels_lists)
 
     def __getitem__(self, index):
         train_input = { }
         test_input = { }
-        labels_list = self.labels_lists[index]
+
+        reasoning_skills_list = self.reasoning_skills_lists[index]
+        '''
+        The default collate_fn will preserve the data structure (also with batch-dimension-adding or list wrapping) when building the batched samples, especially for list, it will recursively walk into the element/value dimension. This will be very buggy code if we return the labels_list!
+        By the way, returning a single tuple object in torch.utils.data.Dataset is also a best-practice.
+        '''
+        labels_list = self.labels_lists[index]  
         sample_id = self.sample_ids[index]
 
         if self.split_set in { 'train', 'val' }:

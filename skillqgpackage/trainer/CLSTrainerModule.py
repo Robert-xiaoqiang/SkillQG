@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import init
@@ -118,9 +119,12 @@ class CLSTrainerModule(pl.LightningModule, TrainerModuleEvalMixin):#, metaclass 
             model_outputs = self(**model_inputs)
 
         labels_posteriors = F.sigmoid(model_outputs['logits'])
-        labels_predictions = torch.LongTensor(labels_posteriors > 0.5).cpu().detach().numpy().tolist()
+        labels_predictions = (labels_posteriors > 0.5).long().cpu().detach().numpy().tolist()
 
-        # B x num_lables, B x num_labels, B x num_labels, B
+        labels_posteriors = labels_posteriors.cpu().detach().numpy().tolist()
+        labels_lists = labels_lists.cpu().detach().numpy().tolist()
+
+        # B x num_lables, B x num_labels, B x num_labels, B (python list-based)
         return labels_predictions, labels_posteriors, labels_lists, sample_ids
 
     def test_epoch_end(self, test_step_outputs):
