@@ -1,4 +1,4 @@
-NAME: 't5small-seq2seqlmtm-fairytaleqa-0'
+NAME: 'bartbase-seq2seqlmtm-fairytaleqalmconcat-0'
 DEVICE: 'cuda:0,1,2,3'
 ACCELERATOR: 'ddp'
 SEED: 32767
@@ -9,7 +9,7 @@ CUDNN:
   ENABLED: True
 MODEL:
   LM_TYPE: AutoModelForSeq2SeqLM
-  PRETRAINED_MODEL_NAME_OR_PATH: 't5-small'
+  PRETRAINED_MODEL_NAME_OR_PATH: 'facebook/bart-base'
   DO_LOWER_CASE: False
   DOC_STRIDE: 320
   MAX_INPUT_LENGTH: 384
@@ -27,14 +27,15 @@ MODEL:
     ANS_TOKEN: '<ans>'
     QUE_TOKEN: '<que>'
     RSK_TOKEN: '<rsk>'
+    PIK_TOKEN: '<pik>'
 TRAIN:
   TRAINER_MODULE: Seq2SeqLMTrainerModule
-  DATASET: FairytaleQASeq2SeqLMDataset
+  DATASET: FairytaleQAPromptSeq2SeqLMConcatDataset
   NUM_EPOCHS: 128
   NUM_WARMUP_STEPS: 2048
   BATCH_SIZE: 8
-  PATIENCE: 16
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/data-by-train-split'
+  PATIENCE: 128
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/train.json'
   LR: 6.25e-5
   EXTRA_LR: 1.00e-4
   LD: 0.9
@@ -49,11 +50,11 @@ TRAIN:
 
   WORKERS: 32
 VAL:
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/data-by-train-split'
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/val.json'
   BATCH_SIZE: 8
   WORKERS: 32
 TEST:
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/data-by-train-split'
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/test.json'
   BATCH_SIZE: 8
   WORKERS: 32
 GENERATE:

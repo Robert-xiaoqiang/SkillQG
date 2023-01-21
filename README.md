@@ -1,10 +1,9 @@
 # Anonymized source code
 
 ## Abstract
-- Learning to ask difficulty-controllable questions with fine-grained comprehension skills
-- Explicitly generating implicit commonsense knowledge from PLMs by prompting
-- Boosting QA performance by training a QA model on the skill-intensive synthetic question-answer pairs
-- Human evaluation
+- Learning to Generate Question for Reading Comprehension Assessment
+- Explicitly generating implicit skill-specific knowledge from PLMs by chain-of-thought prompting
+- Boosting QA performance by training a QA model on the synthetic skill-infused question-answer pairs
 
 ## Prerequisites
 ```bash

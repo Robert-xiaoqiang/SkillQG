@@ -1,4 +1,4 @@
-NAME: 'bartbase-seq2seqlmtm-fairytaleqaprompt-0'
+NAME: 'bartbase-seq2seqlmtm-fairytaleqaconceptnet-0'
 DEVICE: 'cuda:0,1,2,3'
 ACCELERATOR: 'ddp'
 SEED: 32767
@@ -35,7 +35,7 @@ TRAIN:
   NUM_WARMUP_STEPS: 2048
   BATCH_SIZE: 8
   PATIENCE: 128
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/train.json'
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/conceptnet-augmented-json/train.json'
   LR: 6.25e-5
   EXTRA_LR: 1.00e-4
   LD: 0.9
@@ -50,11 +50,11 @@ TRAIN:
 
   WORKERS: 32
 VAL:
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/val.json'
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/conceptnet-augmented-json/val.json'
   BATCH_SIZE: 8
   WORKERS: 32
 TEST:
-  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/lm-augmented-json/test.json'
+  DATASET_FILENAME: '/home/xqwang/projects/qgqa/FairytaleQAData/conceptnet-augmented-json/test.json'
   BATCH_SIZE: 8
   WORKERS: 32
 GENERATE:
