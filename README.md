@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ### Template design based on Bloom's Taxonomy
 
-We provide the generic templates in `/promptpackage/fairytaleqa_bloom_prompt.json`, which contains several pairs of `F-template` and `K-template`.
+- We provide the generic templates in `/promptpackage/fairytaleqa_bloom_prompt.json`, which contains several pairs of `F-template` and `K-template`.
 	- `F-template` is used to discover possible question focuses with either shape of the following two templates:
 		- **prefix template** will be filled by the PLM and we employ the generated tokens as the generated question focus. For example, `What is the definition of <blank>` and `What happened as a result of <blank>`.
 		- **cloze-style template** leaves blanks in the middle part of the input prompt, which we substitute with entities and regard as the question focus. For example, `What will <blank> want to do next?` and `What will happen to <blank> next?`.
@@ -99,10 +99,10 @@ FairytaleQAData/
 	- We follow the widely-used hierarchical configuration paradigm using the [YAML](https://en.wikipedia.org/wiki/YAML) (a human-readable data-serialization mark language) file format.
 	- Run the following script to create a default configuration file.
 
-```bash
-cd configure/
-python default.py
-```
+	```bash
+	cd configure/
+	python default.py
+	```
 
     - Adapt the specific items (or key-value pairs) according to your requirements. We have provided seven typical configurations in the `configure` directory.
 
