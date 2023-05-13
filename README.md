@@ -5,13 +5,14 @@ This repository is the official implementation of the ACL 2023 paper (Findings)
 <div style="text-align: center;">
     <img src="pipeline/pipeline.png" width="700" />
     <p><big><strong>and</strong></big></p>
-    <img src="pipeline/cbbc-activelearning-pipeline.png" width="700" />
+    <img src="pipeline/augmented-qa-decomposition.png" width="400" />
 </div>
 
 ## Abstract
 We present SkillQG: a question generation framework with controllable comprehension types for assessing and improving machine reading comprehension models. Existing question generation systems widely differentiate questions by literal information such as question words and answer types to generate semantically relevant questions for a given context. However, they rarely consider the comprehension nature of questions, i.e. the different comprehension capabilities embodied by different questions. In comparison, our SkillQG is able to tailor a fine-grained assessment and improvement to the capabilities of question-answering models built on it. Specifically, we first frame the comprehension type of questions based on a hierarchical skill-based schema, then formulate SkillQG as a skill-conditioned question generator. Furthermore, to improve the controllability of generation, we augment the input text with question focus and skill-specific knowledge, which are constructed by iteratively prompting the pre-trained language models. Empirical results demonstrate that SkillQG outperforms baselines in terms of quality, relevance, and skill-controllability while showing a promising performance boost in the downstream question-answering task.
 
 ## Prerequisites
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -32,16 +33,16 @@ pip install -r requirements.txt
 
 - Convert the samples of the FairytaleQA dataset from `CSV` to `JSON` format, that is,
 
-```python
-{
-	"qid": {
-		"context": "",
-		"question": "",
-		"answer": "",
-		"reasoning skill": []
+	```python
+	{
+		"qid": {
+			"context": "",
+			"question": "",
+			"answer": "",
+			"reasoning skill": []
+		}
 	}
-}
-```
+	```
 
 	- We provide an alternative script in the `data` sub-package of `skillqgpackage` package, i.e. `skillqgpackage.data.FairytaleQADataset.FairytaleQASeq2SeqLMDataset.parse_and_build()`, to finish this kind of format conversion. In addition to parsing the necessary fields, the script merges the sections involved in the question-answer pair into the final context text and discards other sections, which are extracted by the `corr_sec` field in the FairytaleQA dataset.
 
